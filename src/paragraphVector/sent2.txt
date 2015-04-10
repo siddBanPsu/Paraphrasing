@@ -1,0 +1,7 @@
+ Harbin_NNP Institute_NNP of_IN Technology_NNP (_NNP HIT_NNP )_NNP was_VBD founded_VBN in_IN 1920_CD ._.
+ After_IN nearly_RB 100_CD years_NNS ,_, HIT_NNP has_VBZ developed_VBN into_IN a_DT large_JJ nationally_RB renowned_VBN multi-disciplinary_JJ university_NN with_IN science_NN ,_, engineering_NN and_CC research_NN as_IN its_PRP$ core_NN ._.
+ HIT_NN is_VBZ consistently_RB on_IN the_DT forefront_NN in_IN making_VBG innovations_NNS in_IN research_NN ._. For_IN years_NNS ,_, HIT_NNP has_VBZ continued_VBN to_TO undertake_VB large-scale_JJ and_CC highly_RB sophisticated_JJ national_JJ projects_NNS ._.
+ HIT_NN students_NNS study_NN humanities_NNS and_CC social_JJ sciences_NNS along_IN with_IN basic_JJ engineering_NN and_CC science_NN courses_NNS for_IN a_DT strong_JJ comprehensive_JJ base_NN ._.
+ HIT_NN is_VBZ famous_JJ for_IN its_PRP$ original_JJ style_NN of_IN schooling_VBG :_: 'Being_JJ strict_NN in_IN qualifications_NNS for_IN graduates_NNS ;_: making_VBG every_DT endeavor_NN in_IN educating_NN students_NNS ._. '_''
+ HIT_NN has_VBZ remained_VBN an_DT international_JJ university_NN since_IN its_PRP$ foundation_NN ._. Courses_NNS at_IN HIT_NNP used_VBD to_TO be_VB conducted_VBN exclusively_RB in_IN Russian_NNP and_CC Japanese_JJ ._.
+ Today_NN ,_, all_DT the_DT faculty_NN ,_, students_NNS and_CC staff_NN of_IN HIT_NNP ,_, are_VBP dedicating_VBG ,_, with_IN full_JJ confidence_NN
