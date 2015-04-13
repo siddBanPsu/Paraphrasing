@@ -5,12 +5,12 @@ Created on Apr 4, 2015
 '''
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import os,sys
-print sys.path
-print os.path.join(os.path.dirname(__file__), '..')
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-###START IMPORTS####
 
+# print sys.path
+# print os.path.join(os.path.dirname(__file__), '..')
+# sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+###START IMPORTS####
+import os,sys
 from takahe import takahe 
 from nltk.corpus import stopwords
 from sidd.paraphraser.Paraphraser import *
@@ -20,7 +20,6 @@ import cPickle as pickle
 import datetime
 import networkx as nx
 import igraph
-import rake
 import numpy as np
 from sklearn.feature_extraction.text import TfidfTransformer, \
     TfidfVectorizer
@@ -39,19 +38,20 @@ os.environ['STANFORD_MODELS'] = '../jars/'
 ################################################################################
 os.environ['JAVA_HOME'] = 'C:/Program Files/Java/jdk1.7.0_17/bin' ##Lab desktop
 #pp_type='noccg' #lexical, phrasal, noccg
-file_size='l'
+file_size='s'
 stopwordList=stopwords.words('english')
 #ppdbFileName='ppdb-1.0-'+file_size+'-'+pp_type+'.gz'
 ppdbDir='../../ppdb/'
 posFilterList=['NNP','NNPS'] ## DO NOT MODIFY words with these tags
 
+logging.basicConfig(level=logging.INFO)
+logging.info("Starting program")
 lm = ARPALanguageModel('../../jars/lm_giga_20k_nvp_3gram.arpa', mode='trie')
 #lm = ARPALanguageModel('../jars/lm_csr_5k_vp_2gram.arpa', mode='trie')
 #lm = ARPALanguageModel('../../jars/lm_csr_5k_vp_2gram.arpa')
 #rawFileCorpus='../../dataset-sentences/treatment-sentences-tokenized-stanford.txt'
 
-logging.basicConfig(level=logging.INFO)
-logging.info("Starting program")
+
 #lm = ARPALanguageModel('../jars/lm_giga_20k_nvp_3gram.arpa', mode='trie' )
 #lm = ARPALanguageModel('../jars/lm_giga_20k_nvp_3gram.arpa' )
 #lm = ARPALanguageModel('../jars/lm_csr_5k_vp_2gram.arpa', mode ='trie')
@@ -107,7 +107,7 @@ def generateEnhancedSentences(sentences_no_tags, tagger):
                 sentence_positions=sentence_positions+w+' '
                 token_position=token_position+1
             final_Sentences.append(sentence_positions)
-            return 
+            return final_Sentences
         for transformationObject in all_possible_transformations:
             tokens = transformationObject.sourceSequence.split()
             indices = transformationObject.indices
@@ -140,6 +140,8 @@ def generateEnhancedSentences(sentences_no_tags, tagger):
             #print '#',sentence_positions
             final_Sentences.append(sentence_positions)
     return final_Sentences 
+
+
 def generateTempRewrittenSentences(taggedSentences):
     final_tagged_Sentences=[]
     for ensent in taggedSentences:
@@ -203,6 +205,8 @@ def adjlist_find_paths(a, n, m, path=[]):
             child_paths = adjlist_find_paths(a, child, m, path)
             for child_path in child_paths:
                 paths.append(child_path)
+                if(len(paths)==10000):
+                    return paths
     return paths
 
 def paths_from_to(graph, source, dest):
@@ -223,6 +227,7 @@ def getWordFromVertexName(nameString):
 def getSortedSentenceList(query, raw_sentence_list, english_postagger, min_words=14, max_sentences=2000):
 # igraph object
     enhancedSentences=generateEnhancedSentences(raw_sentence_list,english_postagger)
+    print 'Enhanced sentences==>', len(enhancedSentences)
     taggedSentences=english_postagger.tag_sents(nltk.word_tokenize(sent) for sent in enhancedSentences)
     taggedSentences=generateTempRewrittenSentences(taggedSentences)
     iobject = generateMultiplePaths(taggedSentences)
@@ -230,6 +235,8 @@ def getSortedSentenceList(query, raw_sentence_list, english_postagger, min_words
     endvertex = getVertex(iobject, '-end-/-/-end-')
     vertexList = iobject.vs()
     allpaths = paths_from_to(iobject, startvertex, endvertex)
+    shuffle(allpaths)
+    allpaths=allpaths[0:2000]
     generatedSentences = []
     a = datetime.datetime.now()
     print 'starting paths...'
@@ -244,7 +251,7 @@ def getSortedSentenceList(query, raw_sentence_list, english_postagger, min_words
                     paired_parentheses -= 1
                 elif word == ')':
                     paired_parentheses += 1
-                elif word == '"':
+                elif word == '"' or word == '\'\'' or word == '``':
                     quotation_mark_number += 1
             if paired_parentheses == 0 and \
                 (quotation_mark_number%2) == 0 and \
@@ -271,18 +278,18 @@ def getSortedSentenceList(query, raw_sentence_list, english_postagger, min_words
     docs.append(query) ## Query add
     docs.extend(generatedSentences)
        
-    bow_matrix = TfidfVectorizer().fit_transform(docs)
+    bow_matrix = TfidfVectorizer(stop_words=stopwordList).fit_transform(docs)
     normalized = TfidfTransformer().fit_transform(bow_matrix)
     
     cosine_similarity_matrix = (normalized[1:] * normalized[1:].T).A
-#     sources, targets = cosine_similarity_matrix.nonzero()
-#     similarity_igraph = igraph.Graph(zip(sources, targets), directed=True)
-#     scores = igraph.Graph.pagerank(similarity_igraph)
+    sources, targets = cosine_similarity_matrix.nonzero()
+    similarity_igraph = igraph.Graph(zip(sources, targets), directed=True)
+    scores = igraph.Graph.pagerank(similarity_igraph)
     
     docqueryRelevance = linear_kernel(normalized[0:1], normalized[1:]).flatten()
     
-    #scoredList = [(scores[i] * docqueryRelevance[i], s, i) for i, s in enumerate(generatedSentences)]
-    scoredList = [(docqueryRelevance[i], s, i) for i, s in enumerate(generatedSentences)]
+    scoredList = [(scores[i] * docqueryRelevance[i], s, i) for i, s in enumerate(generatedSentences)]
+    #scoredList = [(docqueryRelevance[i], s, i) for i, s in enumerate(generatedSentences)]
     
     #for score, sent, i in scoredList:
         #print score, sent, i
@@ -295,7 +302,7 @@ def getSortedSentenceList(query, raw_sentence_list, english_postagger, min_words
     #print cossimlist
 
  
-def generateSummary(all_path_list, cosineMatrix, languageModel=lm): 
+def generateSummary(all_path_list, cosineMatrix, maxlength, languageModel=lm): 
     try:
     # Create a new model
         m = Model("mip2")
@@ -319,7 +326,7 @@ def generateSummary(all_path_list, cosineMatrix, languageModel=lm):
         #redundancyConstraint= LinExpr()
         for score, sent, i in all_path_list:
             a=cosineMatrix[i,:]
-            indices= np.where(a>0.3) #redundancy value
+            indices= np.where(a>0.1) #redundancy value
             var=m.getVarByName("var_"+str(i))
             for k in indices[0]:
                 if k == i:
@@ -337,7 +344,7 @@ def generateSummary(all_path_list, cosineMatrix, languageModel=lm):
             var=m.getVarByName("var_"+str(i))
             lengthConstraint.add(var)
         
-        m.addConstr(lengthConstraint, GRB.LESS_EQUAL, 2.0, "length")
+        m.addConstr(lengthConstraint, GRB.LESS_EQUAL, maxlength, "length")
         m.optimize()
          
         solutionList=[] 

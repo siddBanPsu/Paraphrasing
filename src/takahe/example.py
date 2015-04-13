@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import takahe
-
-
+from resources import takahe_old
+from nltk import word_tokenize, pos_tag
+import codecs
 ################################################################################
 sentences = ["The/DT wife/NN of/IN a/DT former/JJ U.S./NNP president/NN \
 Bill/NNP Clinton/NNP Hillary/NNP Clinton/NNP visited/VBD China/NNP last/JJ \
@@ -19,10 +19,21 @@ visited/VBD Chinese/JJ officials/NNS ./PUNCT"]
 # - minimal number of words in the compression : 6
 # - language of the input sentences : en (english)
 # - POS tag for punctuation marks : PUNCT
-compresser = takahe.word_graph( sentences, 
+sentences=[]
+with codecs.open('test.txt', 'r',  'utf-8') as f:
+	for line in f:
+		line = line.replace('%%:','')
+		text = word_tokenize(line.strip())
+		tagged=pos_tag(text)
+		sentence =''
+		for word, token in tagged:
+			sentence=sentence + word+'/'+token+' '
+		sentences.append(sentence.strip())
+			
+compresser = takahe_old.word_graph( sentences, 
 							    nb_words = 6, 
 	                            lang = 'en', 
-	                            punct_tag = "PUNCT" )
+	                            punct_tag = "." )
 
 # Get the 50 best paths
 candidates = compresser.get_compression(50)
@@ -39,8 +50,9 @@ for cummulative_score, path in candidates:
 # Write the word graph in the dot format
 compresser.write_dot('test.dot')
 
+print '*********************'
 # 2. Rerank compressions by keyphrases (Boudin and Morin's method)
-reranker = takahe.keyphrase_reranker( sentences,  
+reranker = takahe_old.keyphrase_reranker( sentences,  
 									  candidates, 
 									  lang = 'en' )
 
